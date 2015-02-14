@@ -2,7 +2,7 @@
 
  Lunatic Python
  --------------
- 
+
  Copyright (c) 2002-2005  Gustavo Niemeyer <gustavo@niemeyer.net>
 
  This library is free software; you can redistribute it and/or

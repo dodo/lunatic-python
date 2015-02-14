@@ -394,7 +394,7 @@ static int py_run(lua_State *L, int eval)
         ret = 1;
 
     Py_DECREF(o);
-    
+
 #if PY_MAJOR_VERSION < 3
     if (Py_FlushLine())
 #endif

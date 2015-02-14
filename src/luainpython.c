@@ -2,7 +2,7 @@
 
  Lunatic Python
  --------------
- 
+
  Copyright (c) 2002-2005  Gustavo Niemeyer <gustavo@niemeyer.net>
 
  This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ static PyObject *LuaObject_New(int n);
 
 PyObject *LuaConvert(lua_State *L, int n)
 {
-    
+
     PyObject *ret = NULL;
 
     switch (lua_type(L, n)) {
@@ -165,7 +165,7 @@ static PyObject *LuaCall(lua_State *L, PyObject *args)
         Py_INCREF(Py_None);
         ret = Py_None;
     }
-    
+
     lua_settop(L, 0);
 
     return ret;
@@ -198,7 +198,7 @@ static PyObject *LuaObject_getattr(PyObject *obj, PyObject *attr)
         PyErr_SetString(PyExc_RuntimeError, "lost reference");
         return NULL;
     }
-    
+
     if (!lua_isstring(LuaState, -1)
         && !lua_istable(LuaState, -1)
         && !lua_isuserdata(LuaState, -1))
@@ -277,7 +277,7 @@ static PyObject *LuaObject_str(PyObject *obj)
                     lua_typename(LuaState, type),
                     lua_topointer(LuaState, -1));
                 break;
-            
+
             case LUA_TUSERDATA:
             case LUA_TLIGHTUSERDATA:
                 ret = PyUnicode_FromFormat("<Lua %s at %p>",
@@ -437,7 +437,7 @@ PyObject *Lua_run(PyObject *args, int eval)
     }
 
     free(buf);
-    
+
     if (lua_pcall(LuaState, 0, 1, 0) != 0) {
         PyErr_Format(PyExc_RuntimeError,
                  "error executing code: %s",

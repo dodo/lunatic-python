@@ -74,6 +74,9 @@ def merge(*dicts):
         return a
     return reduce(dict_extend, dicts, {})
 
+def ldname(pkgc):
+    return "lib%s.so" % pkgc['libraries'][0]
+
 
 py_pkgconfig = pkgconfig(*PYLIBS)
 lua_pkgconfig = pkgconfig(*LUALIBS)
@@ -86,11 +89,13 @@ lunatic.update({
                   ["src/pythoninlua.c", "src/luainpython.c"],
                   define_macros=[
                       ('LUA_MODULE', 'lua'),
+                      ('LUA_LIBRARY', ldname(lua_pkgconfig)),
                   ], **merge(lua_pkgconfig, py_pkgconfig)),
         Extension("luajit",
                   ["src/pythoninlua.c", "src/luainpython.c"],
                   define_macros=[
                       ('LUA_MODULE', 'luajit'),
+                      ('LUA_LIBRARY', ldname(luajit_pkgconfig)),
                   ], **merge(luajit_pkgconfig, py_pkgconfig)),
         ],
 })

@@ -30,6 +30,8 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
+#include <dlfcn.h>
+
 #include "pythoninlua.h"
 #include "luainpython.h"
 
@@ -521,10 +523,15 @@ PyMODINIT_FUNC PyInit_for(LUA_MODULE)(void)
                        "Lunatic-Python Python-Lua bridge");
     if (module == NULL) return;
 #endif
-
     Py_INCREF(&LuaObject_Type);
 
     if (!LuaState) {
+        // reload lua lib with RTLD_GLOBAL to expose it to other libs
+        void* dl = dlopen(NAME(LUA_LIBRARY), RTLD_LAZY|RTLD_GLOBAL|RTLD_NOLOAD);
+        if (dl) dlclose(dl);
+        else fprintf(stderr,
+            "unable to reload "NAME(LUA_MODULE)" ("NAME(LUA_LIBRARY)")!\n");
+
         LuaState = luaL_newstate();
         luaL_openlibs(LuaState);
         luaopen_python(LuaState);

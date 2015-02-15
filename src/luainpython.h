@@ -37,9 +37,16 @@ PyObject *LuaConvert(lua_State *L, int n);
 
 extern lua_State *LuaState;
 
+#define STR(name) #name
+#define NAME(name) STR(name)
+
+#define PyInit_for(name) PyInit_by_(name)
 #if PY_MAJOR_VERSION < 3
-#  define PyInit_lua initlua
+#  define PyInit_by_(name) init##name
+#else
+#  define PyInit_by_(name) PyInit_##name
 #endif
-PyMODINIT_FUNC PyInit_lua(void);
+
+PyMODINIT_FUNC PyInit_for(LUA_MODULE)(void);
 
 #endif

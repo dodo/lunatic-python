@@ -369,7 +369,7 @@ static PyMappingMethods LuaObject_as_mapping = {
 
 PyTypeObject LuaObject_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "lua.custom",             /*tp_name*/
+    NAME(LUA_MODULE)".custom",/*tp_name*/
     sizeof(LuaObject),        /*tp_basicsize*/
     0,                        /*tp_itemsize*/
     (destructor)LuaObject_dealloc, /*tp_dealloc*/
@@ -500,26 +500,26 @@ static PyMethodDef lua_methods[] = {
 #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef lua_module = {
     PyModuleDef_HEAD_INIT,
-    "lua",
+    NAME(LUA_MODULE),
     "Lunatic-Python Python-Lua bridge",
     -1,
     lua_methods
 };
 #endif
 
-PyMODINIT_FUNC PyInit_lua(void)
+PyMODINIT_FUNC PyInit_for(LUA_MODULE)(void)
 {
-    PyObject *m;
+    PyObject *module;
 
 #if PY_MAJOR_VERSION >= 3
     if (PyType_Ready(&LuaObject_Type) < 0) return NULL;
-    m = PyModule_Create(&lua_module);
-    if (m == NULL) return NULL;
+    module = PyModule_Create(&lua_module);
+    if (module == NULL) return NULL;
 #else
     if (PyType_Ready(&LuaObject_Type) < 0) return;
-    m = Py_InitModule3("lua", lua_methods,
+    module = Py_InitModule3(NAME(LUA_MODULE), lua_methods,
                        "Lunatic-Python Python-Lua bridge");
-    if (m == NULL) return;
+    if (module == NULL) return;
 #endif
 
     Py_INCREF(&LuaObject_Type);
@@ -532,6 +532,6 @@ PyMODINIT_FUNC PyInit_lua(void)
     }
 
 #if PY_MAJOR_VERSION >= 3
-    return m;
+    return module;
 #endif
 }

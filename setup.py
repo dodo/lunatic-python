@@ -3,28 +3,43 @@
 import sys
 import os
 
-if sys.version > '3':
-    PY3 = True
-else:
-    PY3 = False
-
-if PY3:
+if sys.version > '3': # python3
     import subprocess as commands
+    from functools import reduce
 else:
     import commands
 from distutils.core import setup, Extension
 from distutils.sysconfig import get_python_lib, get_python_version
 
+lunatic = dict(
+    name="lunatic-python",
+    version="2.0",
+    description="Two-way bridge between Python and Lua",
+    author="Gustavo Niemeyer",
+    author_email="gustavo@niemeyer.net",
+    url="http://labix.org/lunatic-python",
+    license="LGPL",
+    long_description="""\
+Lunatic Python is a two-way bridge between Python and Lua, allowing these
+languages to intercommunicate. Being two-way means that it allows Lua inside
+Python, Python inside Lua, Lua inside Python inside Lua, Python inside Lua
+inside Python, and so on.
+""")
+
+
 if os.path.isfile("MANIFEST"):
     os.unlink("MANIFEST")
 
 # You may have to change these
+LUAJITVERSION = "5.1"
+LUAJITLIBS = ["luajit" + LUAJITVERSION, "luajit-" + LUAJITVERSION, "luajit"]
+
 LUAVERSION = "5.2"
+LUALIBS = ["lua-" + LUAVERSION, "lua" + LUAVERSION, "lua"]
+
 PYTHONVERSION = get_python_version()
-PYLIBS = ["python" + get_python_version(), "pthread", "util"]
-PYLIBDIR = [get_python_lib(standard_lib=True) + "/config"]
-LUALIBS = ["lua" + LUAVERSION]
-LUALIBDIR = []
+PYLIBS = ["python-" + PYTHONVERSION, "python" + PYTHONVERSION, "python"]
+
 
 def pkgconfig(*packages):
     # map pkg-config output to kwargs for distutils.core.Extension
@@ -47,36 +62,37 @@ def pkgconfig(*packages):
         else:                           # throw others to extra_link_args
             kwargs.setdefault('extra_link_args', []).append(token)
 
-    if PY3:
-        items = kwargs.items()
-    else:
-        items = kwargs.iteritems()
-    for k, v in items:     # remove duplicated
+    for k, v in kwargs.items():     # remove duplicated
         kwargs[k] = list(set(v))
 
     return kwargs
 
-lua_pkgconfig = pkgconfig('lua', 'lua' + LUAVERSION,'python-' + PYTHONVERSION)
+def merge(*dicts):
+    def dict_extend(a, b):
+        for k, v in b.items():
+            a.setdefault(k, []).extend(v)
+        return a
+    return reduce(dict_extend, dicts, {})
 
-setup(name="lunatic-python",
-      version="1.0",
-      description="Two-way bridge between Python and Lua",
-      author="Gustavo Niemeyer",
-      author_email="gustavo@niemeyer.net",
-      url="http://labix.org/lunatic-python",
-      license="LGPL",
-      long_description="""\
-Lunatic Python is a two-way bridge between Python and Lua, allowing these
-languages to intercommunicate. Being two-way means that it allows Lua inside
-Python, Python inside Lua, Lua inside Python inside Lua, Python inside Lua
-inside Python, and so on.
-""",
-      ext_modules=[
-        Extension("lua-python",
-                  ["src/pythoninlua.c", "src/luainpython.c"],
-                  **lua_pkgconfig),
+
+py_pkgconfig = pkgconfig(*PYLIBS)
+lua_pkgconfig = pkgconfig(*LUALIBS)
+luajit_pkgconfig = pkgconfig(*LUAJITLIBS)
+
+
+lunatic.update({
+    'ext_modules': [
         Extension("lua",
                   ["src/pythoninlua.c", "src/luainpython.c"],
-                  **lua_pkgconfig),
+                  define_macros=[
+                      ('LUA_MODULE', 'lua'),
+                  ], **merge(lua_pkgconfig, py_pkgconfig)),
+        Extension("luajit",
+                  ["src/pythoninlua.c", "src/luainpython.c"],
+                  define_macros=[
+                      ('LUA_MODULE', 'luajit'),
+                  ], **merge(luajit_pkgconfig, py_pkgconfig)),
         ],
-      )
+})
+
+setup(**lunatic)

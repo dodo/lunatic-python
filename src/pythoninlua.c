@@ -609,5 +609,6 @@ LUA_API int luaopen_python(lua_State *L)
         luaL_error(L, "failed to convert none object");
     }
 
-    return 0;
+    lua_pushboolean(L, 1);
+    return 1;
 }

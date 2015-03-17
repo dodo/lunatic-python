@@ -136,25 +136,24 @@ static int py_object_call(lua_State *L)
 
     if (nargs == 1 && lua_istable(L, 2)) {
 
-        kwargs = PyDict_New();
-        if (!kwargs) {
-            Py_DECREF(args);
-            PyErr_Print();
-            return luaL_error(L, "failed to create keywords arguments dict");
-        }
-
         int len = lua_rawlen(L, 2);
         for (i = 0; i < len; i++) {
             lua_rawgeti(L, 2, i + 1);
             PyObject *arg = LuaConvert(L, -1);
             if (!arg) {
                 Py_DECREF(args);
-                Py_DECREF(kwargs);
                 lua_pop(L, 1);
                 return luaL_error(L, "failed to convert argument #%d", i+1);
             }
             PyTuple_SetItem(args, i, arg);
             lua_pop(L, 1);
+        }
+
+        kwargs = PyDict_New();
+        if (!kwargs) {
+            Py_DECREF(args);
+            PyErr_Print();
+            return luaL_error(L, "failed to create keywords arguments dict");
         }
 
         lua_pushnil(L); // first key

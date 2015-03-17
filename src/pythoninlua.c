@@ -158,7 +158,7 @@ static int py_object_call(lua_State *L)
 
         lua_pushnil(L); // first key
         while (lua_next(L, 2)) {
-            if (!lua_isnumber(L, -2)) {
+            if (lua_isstring(L, -2)) {
                 const char* key = lua_tostring(L, -2);
                 PyObject *kwkey = LuaConvert(  L, -2);
                 PyObject *kwarg = LuaConvert(  L, -1);

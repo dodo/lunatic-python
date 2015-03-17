@@ -115,6 +115,7 @@ static int py_object_call(lua_State *L)
 {
     py_object *obj = (py_object*) luaL_checkudata(L, 1, POBJECT);
     PyObject *args;
+    PyObject *kwargs;
     PyObject *value;
     int nargs = lua_gettop(L)-1;
     int ret = 0;
@@ -133,16 +134,56 @@ static int py_object_call(lua_State *L)
         return luaL_error(L, "failed to create arguments tuple");
     }
 
-    for (i = 0; i != nargs; i++) {
-        PyObject *arg = LuaConvert(L, i+2);
-        if (!arg) {
+    if (nargs == 1 && lua_istable(L, 2)) {
+
+        kwargs = PyDict_New();
+        if (!kwargs) {
             Py_DECREF(args);
-            return luaL_error(L, "failed to convert argument #%d", i+1);
+            PyErr_Print();
+            return luaL_error(L, "failed to create keywords arguments dict");
         }
-        PyTuple_SetItem(args, i, arg);
+
+        lua_pushnil(L); // first key
+        while (lua_next(L, 2)) {
+            if (lua_isnumber(L, -2)) {
+                int i = lua_tointeger(L, -2) - 1;
+                PyObject *arg = LuaConvert(L, -1);
+                if (!arg) {
+                    Py_DECREF(args);
+                    Py_DECREF(kwargs);
+                    lua_pop(L, 2); // pop key + value
+                    return luaL_error(L, "failed to convert argument #%d", i+1);
+                }
+                PyTuple_SetItem(args, i, arg);
+            } else {
+                const char* key = lua_tostring(L, -2);
+                PyObject *kwkey = LuaConvert(  L, -2);
+                PyObject *kwarg = LuaConvert(  L, -1);
+                if (!kwkey || !kwarg) {
+                    Py_DECREF(args);
+                    Py_DECREF(kwargs);
+                    lua_pop(L, 2); // pop key + value
+                    return luaL_error(L, "failed to convert keyword argument %s", key);
+                }
+                PyDict_SetItem(kwargs, kwkey, kwarg);
+            }
+            lua_pop(L, 1); // pop value
+        }
+
+        value = PyObject_Call(obj->o, args, kwargs);
+    } else {
+        for (i = 0; i != nargs; i++) {
+            PyObject *arg = LuaConvert(L, i+2);
+            if (!arg) {
+                Py_DECREF(args);
+                return luaL_error(L, "failed to convert argument #%d", i+1);
+            }
+            PyTuple_SetItem(args, i, arg);
+        }
+
+        value = PyObject_CallObject(obj->o, args);
     }
 
-    value = PyObject_CallObject(obj->o, args);
     if (value) {
         ret = py_convert(L, value, 0);
         Py_DECREF(value);

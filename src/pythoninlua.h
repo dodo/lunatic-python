@@ -2,7 +2,7 @@
 
  Lunatic Python
  --------------
- 
+
  Copyright (c) 2002-2005  Gustavo Niemeyer <gustavo@niemeyer.net>
 
  This library is free software; you can redistribute it and/or
@@ -24,6 +24,10 @@
 #define PYTHONINLUA_H
 
 #define POBJECT "POBJECT"
+
+#if LUA_VERSION_NUM < 502
+#   define lua_rawlen lua_objlen
+#endif
 
 int py_convert(lua_State *L, PyObject *o, int withnone);
 

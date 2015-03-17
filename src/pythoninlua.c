@@ -143,19 +143,23 @@ static int py_object_call(lua_State *L)
             return luaL_error(L, "failed to create keywords arguments dict");
         }
 
+        int len = lua_rawlen(L, 2);
+        for (i = 0; i < len; i++) {
+            lua_rawgeti(L, 2, i + 1);
+            PyObject *arg = LuaConvert(L, -1);
+            if (!arg) {
+                Py_DECREF(args);
+                Py_DECREF(kwargs);
+                lua_pop(L, 1);
+                return luaL_error(L, "failed to convert argument #%d", i+1);
+            }
+            PyTuple_SetItem(args, i, arg);
+            lua_pop(L, 1);
+        }
+
         lua_pushnil(L); // first key
         while (lua_next(L, 2)) {
-            if (lua_isnumber(L, -2)) {
-                int i = lua_tointeger(L, -2) - 1;
-                PyObject *arg = LuaConvert(L, -1);
-                if (!arg) {
-                    Py_DECREF(args);
-                    Py_DECREF(kwargs);
-                    lua_pop(L, 2); // pop key + value
-                    return luaL_error(L, "failed to convert argument #%d", i+1);
-                }
-                PyTuple_SetItem(args, i, arg);
-            } else {
+            if (!lua_isnumber(L, -2)) {
                 const char* key = lua_tostring(L, -2);
                 PyObject *kwkey = LuaConvert(  L, -2);
                 PyObject *kwarg = LuaConvert(  L, -1);

@@ -354,6 +354,7 @@ static int py_run(lua_State *L, int eval)
     const char *s;
     char *buffer = NULL;
     PyObject *m, *d, *o;
+    int multiline = 0;
     int ret = 0;
     int len;
 
@@ -371,6 +372,10 @@ static int py_run(lua_State *L, int eval)
         buffer[len-1] = '\n';
         buffer[len] = '\0';
         s = buffer;
+
+        if (lua_isboolean(L, 2)) {
+            multiline = lua_toboolean(L, 2);
+        }
     }
 
     m = PyImport_AddModule("__main__");
@@ -380,7 +385,8 @@ static int py_run(lua_State *L, int eval)
     }
     d = PyModule_GetDict(m);
 
-    o = PyRun_StringFlags(s, eval ? Py_eval_input : Py_single_input,
+    o = PyRun_StringFlags(s, eval ? Py_eval_input :
+                         (multiline ? Py_file_input : Py_single_input),
                           d, d, NULL);
 
     free(buffer);

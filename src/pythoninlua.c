@@ -156,9 +156,10 @@ static int py_object_call(lua_State *L)
             return luaL_error(L, "failed to create keywords arguments dict");
         }
 
+        i = 0;
         lua_pushnil(L); // first key
-        while (lua_next(L, 2)) {
-            if (lua_isstring(L, -2)) {
+        while (lua_next(L, 2) != 0) {
+            if (lua_isstring(L, -2) && !lua_isnumber(L, -2)) {
                 const char* key = lua_tostring(L, -2);
                 PyObject *kwkey = LuaConvert(  L, -2);
                 PyObject *kwarg = LuaConvert(  L, -1);

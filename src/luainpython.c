@@ -483,7 +483,7 @@ PyObject *Lua_globals(PyObject *self, PyObject *args)
 static PyObject *Lua_require(PyObject *self, PyObject *args)
 {
     lua_getglobal(LuaState, "require");
-    if (lua_isnil(LuaState, -1)) {
+    if (!lua_isfunction(LuaState, -1)) {
         lua_pop(LuaState, 1);
         PyErr_SetString(PyExc_RuntimeError, "require is not defined");
         return NULL;

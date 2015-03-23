@@ -90,6 +90,8 @@ PyObject *LuaConvert(lua_State *L, int n)
             /* Otherwise go on and handle as custom. */
         }
 
+        // TODO cdata
+
         default:
             ret = LuaObject_New(n);
             break;

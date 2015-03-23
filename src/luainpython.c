@@ -493,11 +493,35 @@ static PyObject *Lua_require(PyObject *self, PyObject *args)
     return LuaCall(LuaState, args);
 }
 
+static PyObject *Lua_loadfile(PyObject *self, PyObject *args)
+{
+    lua_getglobal(LuaState, "loadfile");
+    if (!lua_isfunction(LuaState, -1)) {
+        lua_pop(LuaState, 1);
+        PyErr_SetString(PyExc_RuntimeError, "loadfile is not defined");
+        return NULL;
+    }
+    return LuaCall(LuaState, args);
+}
+
+static PyObject *Lua_dofile(PyObject *self, PyObject *args)
+{
+    lua_getglobal(LuaState, "dofile");
+    if (!lua_isfunction(LuaState, -1)) {
+        lua_pop(LuaState, 1);
+        PyErr_SetString(PyExc_RuntimeError, "dofile is not defined");
+        return NULL;
+    }
+    return LuaCall(LuaState, args);
+}
+
 static PyMethodDef lua_methods[] = {
     {"execute",    Lua_execute,    METH_VARARGS,        NULL},
     {"eval",       Lua_eval,       METH_VARARGS,        NULL},
     {"globals",    Lua_globals,    METH_NOARGS,         NULL},
     {"require",    Lua_require,    METH_VARARGS,        NULL},
+    {"loadfile",   Lua_loadfile,   METH_VARARGS,        NULL},
+    {"dofile",     Lua_dofile,     METH_VARARGS,        NULL},
     {NULL,         NULL}
 };
 

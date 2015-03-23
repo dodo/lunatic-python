@@ -581,6 +581,51 @@ static int py_import(lua_State *L)
     return ret;
 }
 
+static int py_load(lua_State *L)
+{
+    const char *filename = luaL_checkstring(L, 1);
+    const char *name, *src;
+    PyObject *module, *code;
+    int ret;
+
+    if (!filename) {
+        return luaL_argerror(L, 1, "file name expected");
+    }
+
+    luaL_loadstring(L,
+        " local name = ..."
+        " local f = io.open(name, 'r')"
+        " local src = f and f:read('*a') or ''"
+        " if f then f:close() end"
+        " return src, name:match('(.*)%.py$'):gsub('/', '.')"
+    );
+    lua_pushvalue(L, 1);
+    lua_call(L, 1, 2);
+
+    name = lua_tostring(L, -1);
+    src  = lua_tostring(L, -2);
+    lua_pop(L, 2);
+
+    code = Py_CompileString(src, filename, Py_file_input);
+
+    if (!code) {
+        PyErr_Print();
+        return luaL_error(L, "failed compiling '%s'", filename);
+    }
+
+    module = PyImport_ExecCodeModule(name, code);
+
+    if (!module) {
+        PyErr_Print();
+        return luaL_error(L, "failed running file '%s'", name);
+    }
+
+    ret = py_convert_custom(L, module, 0);
+    Py_DECREF(module);
+    Py_DECREF(code);
+    return ret;
+}
+
 py_object* luaPy_to_pobject(lua_State *L, int n)
 {
     if(!lua_getmetatable(L, n)) return NULL;
@@ -599,8 +644,9 @@ static const luaL_Reg py_lib[] = {
     {"asfunc",  py_asfunc},
     {"locals",  py_locals},
     {"globals", py_globals},
-    {"builtins",    py_builtins},
+    {"builtins",py_builtins},
     {"import",  py_import},
+    {"load",    py_load},
     {NULL, NULL}
 };
 
